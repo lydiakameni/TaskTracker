@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using TaskTracker.Application.Exceptions;
+using FluentValidation;
 
 namespace TaskTracker.API.Middlewares;
 
@@ -32,6 +33,7 @@ public class GlobalExceptionHandler : IExceptionHandler
     {
         var (statusCode, title) = exception switch
         {
+            ValidationException         => (StatusCodes.Status400BadRequest, "Données invalides"),// Exemple : format JSON invalide ou règles FluentValidation non respectées
             UnauthorizedException       => (StatusCodes.Status401Unauthorized, "Non authentifié"),// Exemple : jeton JWT invalide ou expiré
             UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Accès refusé"),// Exemple : utilisateur authentifié mais sans le rôle requis
             NotFoundException           => (StatusCodes.Status404NotFound, "Ressource introuvable"),// Exemple : ressource demandée inexistante
@@ -58,12 +60,24 @@ public class GlobalExceptionHandler : IExceptionHandler
         {
             Status = statusCode,
             Title = title,
-            Detail = isServerError
-                ? "Une erreur inattendue est survenue. Veuillez réessayer plus tard."
-                : exception.Message,
+            Detail = exception switch
+                {
+                    ValidationException => "Une ou plusieurs données envoyées sont invalides.",
+                    _ when isServerError => "Une erreur inattendue est survenue. Veuillez réessayer plus tard.",
+                    _ => exception.Message
+                }, // Le détail technique n'est jamais exposé côté client pour les erreurs 500, uniquement dans les journaux.
             Instance = httpContext.Request.Path
         };
         problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
+
+        // Pour une erreur de validation, on liste les messages par champ :
+        // le frontend peut ainsi afficher chaque erreur sous le bon champ du formulaire.
+        if (exception is ValidationException validationException)
+        {
+            problemDetails.Extensions["errors"] = validationException.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+        }
 
         httpContext.Response.StatusCode = statusCode;
         await httpContext.Response.WriteAsJsonAsync(
