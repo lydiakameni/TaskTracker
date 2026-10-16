@@ -2,7 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TaskTracker.Application.Features.Auth.DTOs;
 using TaskTracker.Application.Exceptions;
-using TaskTracker.Application.Features.Auth.Commands;
+using TaskTracker.Application.Features.Auth.Commands.Register;
 using TaskTracker.Application.Features.Auth.Commands.Refresh;
 using TaskTracker.Application.Features.Auth.Commands.Revoke;
 using TaskTracker.Application.Features.Auth.Queries;
@@ -17,12 +17,18 @@ public class AuthController : ControllerBase
 
     public AuthController(IMediator mediator) => _mediator = mediator;
 
-    // Inscription d'un nouvel utilisateur
+    /// <summary>
+    /// Inscrit un nouvel utilisateur avec le rôle "User".
+    /// </summary>
+    /// <response code="200">Inscription réussie : Access Token dans le corps, Refresh Token en cookie HttpOnly.</response>
+    /// <response code="409">Ce nom d'utilisateur est déjà utilisé.</response>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command)
     {
-        var response = await _mediator.Send(command);
-        return Ok(response);
+        var result = await _mediator.Send(command);
+
+        SetRefreshTokenCookie(result.RefreshToken);
+        return Ok(new AuthResponse(result.AccessToken));
     }
 
     // Connexion : renvoie l'AccessToken et écrit le RefreshToken dans un Cookie HttpOnly

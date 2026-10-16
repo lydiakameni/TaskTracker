@@ -38,23 +38,33 @@ builder.Services.AddSwaggerGen(options =>
 
     options.AddSecurityDefinition("Bearer", securityScheme);
 
+    // Le document est passé à la référence pour qu'elle pointe bien vers le schéma "Bearer"
+    // déclaré ci-dessus. Sans lui, Swagger UI n'envoie pas l'en-tête Authorization.
     options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecuritySchemeReference("Bearer"),
-            new List<string>()
-        }
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
     });
 });
 
 // Configuration de l'Authentification JWT
+// La clé de signature JWT ne doit jamais être stockée dans le code source.
+// Développement : dotnet user-secrets set "Jwt:SecretKey" "<clé>" --project TaskTracker.API
+// Production    : variable d'environnement Jwt__SecretKey
+var jwtSecretKey = builder.Configuration["Jwt:SecretKey"];
+if (string.IsNullOrWhiteSpace(jwtSecretKey) || Encoding.UTF8.GetByteCount(jwtSecretKey) < 32)
+{
+    throw new InvalidOperationException(
+        "La clé 'Jwt:SecretKey' est absente ou trop courte (32 octets minimum pour HMAC-SHA256). " +
+        "Configurez-la avec 'dotnet user-secrets' ou la variable d'environnement 'Jwt__SecretKey'.");
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
             
             ValidateIssuer = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
