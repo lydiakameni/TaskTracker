@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TaskTracker.Infrastructure.Data;
+using TaskTracker.Application.Interfaces;
+using TaskTracker.Domain.Constants;
+using TaskTracker.Domain.Entities;
+
 
 namespace TaskTracker.API.IntegrationTests;
 
@@ -37,5 +41,34 @@ public class TaskTrackerApiFactory : WebApplicationFactory<Program>
             // ...et on la remplace par une base en mémoire
             services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(_databaseName));
         });
+    }
+
+    /// <summary>
+    /// Crée un administrateur directement en base, puisque l'inscription publique
+    /// n'attribue jamais ce rôle.
+    /// </summary>
+    public async Task CreateAdminAsync(string username, string password)
+    {
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+
+        dbContext.Users.Add(new User
+        {
+            Username = username,
+            PasswordHash = passwordHasher.Hash(password),
+            Role = Roles.Admin
+        });
+        await dbContext.SaveChangesAsync();
+    }
+
+    /// <summary>Renvoie l'identifiant d'un utilisateur à partir de son nom.</summary>
+    public async Task<int> GetUserIdAsync(string username)
+    {
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var user = await dbContext.Users.SingleAsync(u => u.Username == username);
+        return user.Id;
     }
 }
