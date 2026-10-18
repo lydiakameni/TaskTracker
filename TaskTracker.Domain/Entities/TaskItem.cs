@@ -9,4 +9,17 @@ public class TaskItem: AuditableEntity
     
     public int UserId { get; set; }
     public User? User { get; set; }
+
+
+    /// <summary>
+    /// Marque la tâche comme terminée. Sans effet si elle l'est déjà (opération idempotente).
+    /// </summary>
+    /// <remarks>
+    /// La règle métier vit dans l'entité elle-même : aucun autre code n'a besoin
+    /// de savoir comment on « termine » une tâche.
+    /// </remarks>
+    public void MarkAsCompleted()
+    {
+        IsCompleted = true;
+    }
 }

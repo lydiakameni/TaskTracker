@@ -8,6 +8,7 @@ using TaskTracker.Application.Features.Tasks.Commands.CreateTask;
 using TaskTracker.Application.Features.Tasks.Commands.DeleteTask;
 using TaskTracker.Application.Features.Tasks.Queries;
 using TaskTracker.Domain.Constants;
+using TaskTracker.Application.Features.Tasks.Commands.CompleteTask;
 
 namespace TaskTracker.API.Controllers;
 
@@ -35,6 +36,30 @@ public class TasksController : ControllerBase
     }
 
     /// <summary>
+    /// Renvoie une tâche précise. Accessible à son propriétaire ou à un administrateur.
+    /// </summary>
+    [HttpGet("{id:int}")]
+    [ProducesResponseType<TaskResponseDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetTaskById(int id)
+    {
+        var task = await _mediator.Send(new GetTaskByIdQuery(id, GetCurrentUserId(), IsAdmin));
+        return Ok(task);
+    }
+
+    /// <summary>
+    /// Marque une tâche comme terminée. Accessible à son propriétaire ou à un administrateur.
+    /// </summary>
+    [HttpPatch("{id:int}/complete")]
+    [ProducesResponseType<TaskResponseDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CompleteTask(int id)
+    {
+        var task = await _mediator.Send(new CompleteTaskCommand(id, GetCurrentUserId(), IsAdmin));
+        return Ok(task);
+    }
+
+    /// <summary>
     /// Crée une tâche, assignée à l'administrateur ou à un utilisateur cible. Réservé aux administrateurs.
     /// </summary>
     [HttpPost]
@@ -47,7 +72,7 @@ public class TasksController : ControllerBase
         var command = new CreateTaskCommand(request.Title, GetCurrentUserId(), request.TargetUserId);
         var createdTask = await _mediator.Send(command);
 
-        return CreatedAtAction(nameof(GetMyTasks), createdTask);
+        return CreatedAtAction(nameof(GetTaskById), new { id = createdTask.Id }, createdTask);
     }
 
     /// <summary>
@@ -62,6 +87,9 @@ public class TasksController : ControllerBase
         await _mediator.Send(new DeleteTaskCommand(id, GetCurrentUserId(), User.IsInRole(Roles.Admin)));
         return NoContent();
     }
+
+    /// <summary>Indique si l'utilisateur connecté a le rôle Administrateur.</summary>
+    private bool IsAdmin => User.IsInRole(Roles.Admin);
 
     /// <summary>
     /// Lit l'identifiant de l'utilisateur connecté depuis le JWT.
