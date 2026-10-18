@@ -1,15 +1,24 @@
 namespace TaskTracker.Domain.Entities;
 
-public class TaskItem: AuditableEntity
+/// <summary>
+/// Tâche assignée à un utilisateur.
+/// </summary>
+public class TaskItem : AuditableEntity
 {
+    /// <summary>Identifiant unique.</summary>
     public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public bool IsCompleted { get; set; }
-    
-    
-    public int UserId { get; set; }
-    public User? User { get; set; }
 
+    /// <summary>Intitulé de la tâche.</summary>
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>Indique si la tâche est terminée.</summary>
+    public bool IsCompleted { get; set; }
+
+    /// <summary>Identifiant de l'utilisateur à qui la tâche est assignée.</summary>
+    public int UserId { get; set; }
+
+    /// <summary>Utilisateur à qui la tâche est assignée.</summary>
+    public User? User { get; set; }
 
     /// <summary>
     /// Marque la tâche comme terminée. Sans effet si elle l'est déjà (opération idempotente).

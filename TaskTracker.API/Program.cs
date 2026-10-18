@@ -24,7 +24,26 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "TaskTracker API", Version = "v1" });
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "TaskTracker API",
+        Version = "v1",
+        Description = "API REST de gestion de tâches : authentification JWT avec rotation des Refresh Tokens, " +
+                    "rôles Admin/User, Clean Architecture et CQRS (MediatR).",
+        Contact = new OpenApiContact
+        {
+            Name = "Lydia Garcia MBOUWE KAMENI",
+            Url = new Uri("https://github.com/LydiaKameni")
+        }
+    });
+
+    // Intègre les commentaires XML (///) de l'API et de la couche Application dans Swagger
+    foreach (var xmlFile in new[] { "TaskTracker.API.xml", "TaskTracker.Application.xml" })
+    {
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath))
+            options.IncludeXmlComments(xmlPath);
+    }
 
     var securityScheme = new OpenApiSecurityScheme
     {
