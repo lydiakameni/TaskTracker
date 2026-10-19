@@ -1,0 +1,9 @@
+<Project>
+  <!-- Paramètres communs à tous les projets de la solution -->
+  <PropertyGroup>
+    <!-- Génère un fichier XML à partir des commentaires /// (lu par Swagger et Visual Studio) -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591 : n'impose pas un commentaire sur chaque membre public (constructeurs, etc.) -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+</Project>

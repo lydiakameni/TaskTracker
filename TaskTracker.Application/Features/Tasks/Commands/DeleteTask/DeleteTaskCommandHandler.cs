@@ -1,9 +1,15 @@
 using MediatR;
+using TaskTracker.Application.Exceptions;
+using TaskTracker.Application.Features.Tasks;
 using TaskTracker.Domain.Interfaces;
 
 namespace TaskTracker.Application.Features.Tasks.Commands.DeleteTask;
 
-public class DeleteTaskCommandHandler : IRequestHandler<DeleteTaskCommand, bool>
+/// <summary>
+/// Supprime une tâche (soft delete). Autorisé au propriétaire de la tâche ou à un administrateur.
+/// </summary>
+/// <exception cref="NotFoundException">Tâche inexistante, déjà supprimée ou inaccessible (404).</exception>
+public class DeleteTaskCommandHandler : IRequestHandler<DeleteTaskCommand>
 {
     private readonly ITaskRepository _taskRepository;
 
@@ -12,23 +18,9 @@ public class DeleteTaskCommandHandler : IRequestHandler<DeleteTaskCommand, bool>
         _taskRepository = taskRepository;
     }
 
-    public async Task<bool> Handle(DeleteTaskCommand request, CancellationToken cancellationToken)
+    public async Task Handle(DeleteTaskCommand request, CancellationToken cancellationToken)
     {
-        // 1. Vérifier si la tâche existe
-        var task = await _taskRepository.GetByIdAsync(request.TaskId);
-        if (task == null)
-        {
-            return false; // Tâche introuvable
-        }
-
-        // 2. Vérification des droits : L'utilisateur doit être le propriétaire OU un Admin
-        if (task.UserId != request.UserId && request.UserRole != "Admin")
-        {
-            throw new UnauthorizedAccessException("Vous n'avez pas l'autorisation de supprimer cette tâche.");
-        }
-
-        // 3. Suppression
+        var task = await _taskRepository.GetAccessibleTaskAsync(request.TaskId, request.UserId, request.IsAdmin);
         await _taskRepository.DeleteAsync(task);
-        return true;
     }
 }

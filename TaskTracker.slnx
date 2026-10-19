@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/TaskTracker.Application.Tests/TaskTracker.Application.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/TaskTracker.API.IntegrationTests/">
+    <Project Path="tests/TaskTracker.API.IntegrationTests/TaskTracker.API.IntegrationTests.csproj" />
+  </Folder>
   <Project Path="TaskTracker.API/TaskTracker.API.csproj" />
   <Project Path="TaskTracker.Application/TaskTracker.Application.csproj" />
   <Project Path="TaskTracker.Domain/TaskTracker.Domain.csproj" />

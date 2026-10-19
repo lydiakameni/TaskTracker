@@ -1,5 +1,5 @@
 using MediatR;
-using TaskTracker.Application.Features.Auth.Commands; // Pour réutiliser AuthResponse
+using TaskTracker.Application.Exceptions;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Interfaces;
 using TaskTracker.Application.Features.Auth.DTOs;
@@ -29,7 +29,7 @@ public class LoginQueryHandler : IRequestHandler<LoginQuery, AuthenticationResul
         // On fusionne la vérification pour ne pas donner d'indice aux pirates (ex: "utilisateur non trouvé" vs "mot de passe faux")
         if (user == null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
-            throw new Exception("Identifiants incorrects.");
+            throw new UnauthorizedException("Nom d'utilisateur ou mot de passe incorrect.");
         }
 
         var accessToken = _jwtProvider.GenerateAccessToken(user);
