@@ -3,6 +3,7 @@
 [![CI](https://github.com/lydiakameni/TaskTracker/actions/workflows/ci.yml/badge.svg)](https://github.com/lydiakameni/TaskTracker/actions/workflows/ci.yml)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 ![Clean Architecture](https://img.shields.io/badge/architecture-Clean-blue)
+🇫🇷 [Version française](README.fr.md)
 
 A secure REST API for task management, built with **ASP.NET Core (.NET 10)** following **Clean Architecture** and **CQRS** principles.
 
